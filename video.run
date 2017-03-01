@@ -1,0 +1,75 @@
+reset;
+
+model video.mod;
+option solver '../gurobi';
+# option solver_msg 1;
+#################
+param input symbolic;
+let input := "./example.in";
+#let input := "./me_at_the_zoo.in";
+#let input := "./videos_worth_spreading.in";
+#let input := "./trending_today.in";
+#let input := "./kittens.in";
+################
+
+read V, E, R, C, X < (input);
+read {v in 1..V} videos[v] < (input);
+for {e in END_SET}
+{
+   read endpoints[e, 1], j < (input);  # DC latency, n of caches
+
+   for {t in 1..j}
+   {
+       read k, endpoints[e, k+2] < (input);
+   }
+}
+for {r in REQUEST_SET}
+{
+    read j, k, requests[j+1, k+1] < (input);
+}
+
+#for {v in VIDEO_SET}
+#{
+#    for {e in END_SET}
+#    {
+#        if (requests[v, e] = 0) then
+#        {
+#            for {c in CACHE_SET}
+#            {
+#                if (endpoints[e, c+1] < 1e100) then
+#                {
+#                    let caches[v, c] := 0;
+#                }
+#            }
+#        }
+#    }
+#}
+
+# expand;
+# solve;
+display V, E, R, C, X;
+display endpoints;
+display videos;
+display requests;
+#display caches;
+
+#display obj_func;
+#display caches;
+
+#printf "\n----------------------\n";
+#printf "Elapsed time: %f\n", _total_solve_system_time;
+#printf "----------------------\n\n";
+#
+#for {c in CACHE_SET}
+#{
+#    printf "%d ", c-1;
+#    for {v in VIDEO_SET}
+#    {
+#        if (caches[v, c] > 0) then
+#        {
+#            printf "%d ", v-1;
+#            #printf "Video #%d goes in cache %d ", v-1, c-1;
+#        }
+#    }
+#    printf "\n";
+#}

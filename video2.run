@@ -1,0 +1,69 @@
+reset;
+
+model video2.mod;
+option solver '../locsol';
+param debug;
+let debug := 1;
+
+param input symbolic;   # input file
+param output symbolic;  # output file
+#let input := "./example.in";
+#let output := "./example.out";
+let input := "./me_at_the_zoo.in";
+let output := "./me_at_the_zoo.out";
+#let input := "./videos_worth_spreading.in";
+#let output := "./videos_worth_spreading.out";
+#let input := "./trending_today.in";
+#let output := "./trending_today.out";
+#let input := "./kittens.in";
+#let output := "./kittens.out";
+################
+
+param nc, integer;              # n_caches connected
+param c, integer;               # cache
+param v integer;                # video
+param e integer;                # endpoint
+
+read V, E, R, C, X < (input);
+read {vi in VIDEO_SET} videos[vi] < (input);
+
+for {en in END_SET}                                             # endpoint latencies
+{
+    read end_to_DC[en], nc < (input);                           # DC latency, caches connected
+    for {n in 1..nc}
+    {
+        read c, end_to_cache[en, c+1] < (input);                # cache_ID, latency with it
+    }
+}
+
+for {r in REQUEST_SET}
+{
+    read v, e, requests[e+1, v+1] < (input);                    # request of video "v" from  endpoint "e"
+}
+
+printf "Input: %s\n\n", (input);
+printf "----------------------------\n\n";
+display V, E, R, C, X;
+print "----------------------------";
+#display videos;
+#display end_to_DC;
+#display end_to_cache;
+#display requests;
+#expand;
+solve;
+
+printf "%d\n", C > (output);
+for {ca in CACHE_SET}
+{
+    printf "%d ", ca-1 > (output);
+    for {vi in VIDEO_SET}
+    {
+        if (caches[ca, vi] > 0) then
+        {
+            printf "%d ", vi-1 > (output);
+        }
+    }
+    printf '\n' > (output);
+}
+
+#display caches;
